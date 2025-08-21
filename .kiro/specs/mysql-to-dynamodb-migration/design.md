@@ -219,118 +219,80 @@ graph LR
 #### DynamoDB Single Table Design Visualization
 
 ```mermaid
-erDiagram
-    SINGLE_TABLE {
-        string PK "Partition Key"
-        string SK "Sort Key"
-        string GSI1PK "GSI1 Partition Key"
-        string GSI1SK "GSI1 Sort Key"
-        string GSI2PK "GSI2 Partition Key"
-        string GSI2SK "GSI2 Sort Key"
-        string EntityType "Entity Type"
-        string CreatedAt "Creation Timestamp"
-        string UpdatedAt "Update Timestamp"
-        json Attributes "Entity-specific attributes"
-    }
+graph TB
+    subgraph "DynamoDB Single Table: BillingSystem"
+        subgraph "Table Structure"
+            PK[PK - Partition Key]
+            SK[SK - Sort Key]
+            GSI1[GSI1PK / GSI1SK]
+            GSI2[GSI2PK / GSI2SK]
+            ET[EntityType]
+        end
+        
+        subgraph "Entity Examples with Key Patterns"
+            BA["BILLING_ACCOUNT<br/>PK: BAN#12345<br/>SK: ACCOUNT<br/>EntityType: BILLING_ACCOUNT"]
+            
+            CUST["CUSTOMER<br/>PK: BAN#12345<br/>SK: CUSTOMER<br/>EntityType: CUSTOMER"]
+            
+            SUB["SUBSCRIBER<br/>PK: BAN#12345<br/>SK: SUB#SUB001<br/>GSI1PK: SUB#SUB001<br/>GSI1SK: ACCOUNT<br/>EntityType: SUBSCRIBER"]
+            
+            SA["SERVICE_AGREEMENT<br/>PK: BAN#12345<br/>SK: SA#SUB001#SOC123<br/>GSI1PK: SUB#SUB001<br/>GSI1SK: SA#SOC123<br/>EntityType: SERVICE_AGREEMENT"]
+            
+            BILL["BILL<br/>PK: BAN#12345<br/>SK: BILL#001<br/>GSI2PK: BILL#MONTHLY<br/>GSI2SK: 2024-01-31<br/>EntityType: BILL"]
+            
+            CHARGE["CHARGE<br/>PK: BAN#12345<br/>SK: CHARGE#001#ACT001<br/>GSI1PK: SUB#SUB001<br/>GSI1SK: CHARGE#2024-01-15<br/>GSI2PK: CHARGE#VOICE<br/>GSI2SK: 2024-01-15<br/>EntityType: CHARGE"]
+        end
+    end
     
-    %% Entity Type Examples in Single Table
-    BILLING_ACCOUNT_ITEM {
-        string PK "BAN#12345"
-        string SK "ACCOUNT"
-        string EntityType "BILLING_ACCOUNT"
-        string Account_Status "Active"
-        string bill_cycle "Monthly"
-        float AR_Balance "1500.00"
-    }
+    PK --> BA
+    PK --> CUST
+    PK --> SUB
+    PK --> SA
+    PK --> BILL
+    PK --> CHARGE
     
-    CUSTOMER_ITEM {
-        string PK "BAN#12345"
-        string SK "CUSTOMER"
-        string EntityType "CUSTOMER"
-        string First_name "John"
-        string Last_name "Doe"
-        string Email "john.doe@example.com"
-    }
-    
-    SUBSCRIBER_ITEM {
-        string PK "BAN#12345"
-        string SK "SUB#SUB001"
-        string GSI1PK "SUB#SUB001"
-        string GSI1SK "ACCOUNT"
-        string EntityType "SUBSCRIBER"
-        string Product_type "Mobile"
-        string Subscriber_Status "Active"
-    }
-    
-    SERVICE_AGREEMENT_ITEM {
-        string PK "BAN#12345"
-        string SK "SA#SUB001#SOC123"
-        string GSI1PK "SUB#SUB001"
-        string GSI1SK "SA#SOC123"
-        string EntityType "SERVICE_AGREEMENT"
-        string SOC "SOC123"
-        string SOC_EffectiveDate "2024-01-01"
-    }
-    
-    BILL_ITEM {
-        string PK "BAN#12345"
-        string SK "BILL#001"
-        string GSI2PK "BILL#MONTHLY"
-        string GSI2SK "2024-01-31"
-        string EntityType "BILL"
-        int Bill_seq_number "1"
-        string cycle_code "MONTHLY"
-    }
-    
-    CHARGE_ITEM {
-        string PK "BAN#12345"
-        string SK "CHARGE#001#ACT001"
-        string GSI1PK "SUB#SUB001"
-        string GSI1SK "CHARGE#2024-01-15"
-        string GSI2PK "CHARGE#VOICE"
-        string GSI2SK "2024-01-15"
-        string EntityType "CHARGE"
-        float Activity_Amount "25.99"
-        string Feature_code "VOICE"
-    }
-    
-    %% Relationships shown through key patterns
-    SINGLE_TABLE ||--o{ BILLING_ACCOUNT_ITEM : "PK=BAN#"
-    SINGLE_TABLE ||--o{ CUSTOMER_ITEM : "PK=BAN#"
-    SINGLE_TABLE ||--o{ SUBSCRIBER_ITEM : "PK=BAN#"
-    SINGLE_TABLE ||--o{ SERVICE_AGREEMENT_ITEM : "PK=BAN#"
-    SINGLE_TABLE ||--o{ BILL_ITEM : "PK=BAN#"
-    SINGLE_TABLE ||--o{ CHARGE_ITEM : "PK=BAN#"
+    style BA fill:#e1f5fe
+    style CUST fill:#f3e5f5
+    style SUB fill:#e8f5e8
+    style SA fill:#fff3e0
+    style BILL fill:#fce4ec
+    style CHARGE fill:#f1f8e9
 ```
 
 #### Access Patterns with Key Structures
 
 ```mermaid
-graph TB
-    subgraph "Main Table Access Patterns"
-        AP1["Access Pattern 1:<br/>Get Billing Account + All Related Data<br/>Query: PK = BAN#{BAN}<br/>Returns: Account, Customer, Subscribers, Bills, Charges"]
-        
-        AP2["Access Pattern 2:<br/>Get Single Entity<br/>Query: PK = BAN#{BAN} AND SK = {entity_key}<br/>Returns: Specific entity (Account, Customer, etc.)"]
+flowchart TD
+    MainTable[DynamoDB Single Table<br/>BillingSystem]
+    
+    subgraph "Main Table Queries"
+        AP1[Get All Data for Billing Account<br/>Query: PK = BAN#12345<br/>Returns: All entities for account]
+        AP2[Get Specific Entity<br/>Query: PK = BAN#12345 AND SK = CUSTOMER<br/>Returns: Customer details]
     end
     
-    subgraph "GSI1 Access Patterns"
-        GSI1_AP1["GSI1 Pattern 1:<br/>Get Subscriber + Service Agreements<br/>Query: GSI1PK = SUB#{subscriber_no}<br/>Returns: Subscriber and all SAs"]
-        
-        GSI1_AP2["GSI1 Pattern 2:<br/>Get Subscriber Charges by Date<br/>Query: GSI1PK = SUB#{subscriber_no}<br/>Filter: GSI1SK begins_with 'CHARGE#'<br/>Returns: All charges for subscriber"]
+    subgraph "GSI1: Subscriber-Based Queries"
+        GSI1_1[Get Subscriber + Service Agreements<br/>Query: GSI1PK = SUB#SUB001<br/>Returns: Subscriber and SAs]
+        GSI1_2[Get Subscriber Charges<br/>Query: GSI1PK = SUB#SUB001<br/>Filter: GSI1SK begins_with CHARGE<br/>Returns: All subscriber charges]
     end
     
-    subgraph "GSI2 Access Patterns"
-        GSI2_AP1["GSI2 Pattern 1:<br/>Get Bills by Cycle + Date Range<br/>Query: GSI2PK = BILL#{cycle_code}<br/>Range: GSI2SK between dates<br/>Returns: Bills in date range"]
-        
-        GSI2_AP2["GSI2 Pattern 2:<br/>Get Charges by Feature + Date<br/>Query: GSI2PK = CHARGE#{feature_code}<br/>Range: GSI2SK between dates<br/>Returns: Feature charges in range"]
+    subgraph "GSI2: Time-Based Queries"
+        GSI2_1[Get Bills by Cycle<br/>Query: GSI2PK = BILL#MONTHLY<br/>Range: GSI2SK between dates<br/>Returns: Bills in date range]
+        GSI2_2[Get Charges by Feature<br/>Query: GSI2PK = CHARGE#VOICE<br/>Range: GSI2SK between dates<br/>Returns: Voice charges in range]
     end
     
-    MainTable[DynamoDB Single Table] --> AP1
+    MainTable --> AP1
     MainTable --> AP2
-    GSI1[GSI1: Subscriber-based queries] --> GSI1_AP1
-    GSI1 --> GSI1_AP2
-    GSI2[GSI2: Time-based queries] --> GSI2_AP1
-    GSI2 --> GSI2_AP2
+    MainTable --> GSI1_1
+    MainTable --> GSI1_2
+    MainTable --> GSI2_1
+    MainTable --> GSI2_2
+    
+    style AP1 fill:#e3f2fd
+    style AP2 fill:#e3f2fd
+    style GSI1_1 fill:#e8f5e8
+    style GSI1_2 fill:#e8f5e8
+    style GSI2_1 fill:#fff3e0
+    style GSI2_2 fill:#fff3e0
 ```
 
 #### Key Design Patterns
