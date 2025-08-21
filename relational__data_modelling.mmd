@@ -1,0 +1,65 @@
+erDiagram
+    BILLING_ACCOUNT {
+        string BAN PK "Billing Account Number"
+        string Account_Status
+        string bill_cycle
+        string Account_type
+        string Account_Subtype
+        float AR_Balance
+        string Creation_Date
+        string Sub_Market
+        int BL_Current_bill_sequence_number
+        float pending_balance
+        string credit_class
+        string bill_method
+    }
+    SUBSCRIBER {
+        string Subscriber_no PK
+        string BAN FK
+        string Product_type
+        string Subscriber_Status
+        string effective_date
+    }
+    SERVICE_AGREEMENT {
+        string BAN PK
+        string Subscriber_no
+        string SOC
+        string SOC_EffectiveDate
+    }
+    CUSTOMER {
+        string BAN PK
+        string First_name
+        string Last_name
+        string SSN
+        string Contact_number
+        string Email
+        string Company
+    }
+    BILL {
+        string BAN PK
+        int Bill_seq_number
+        string cycle_code
+        string Cycle_close_date
+        int Cycle_Run_Year
+        int Cycle_run_month
+    }
+    CHARGE {
+        string BAN PK
+        int Charge_Sequence_number
+        string Activity_number
+        float Activity_Amount
+        string Charge_creation_Date
+        string Feature_code
+        string subscriber_no
+        string SOC
+        string SOC_Date
+        string Sub_Market_Code
+    }
+
+    BILLING_ACCOUNT ||--o{ SUBSCRIBER : "has"
+    BILLING_ACCOUNT ||--o{ SERVICE_AGREEMENT : "has"
+    BILLING_ACCOUNT ||--o{ CUSTOMER : "belongs to"
+    BILLING_ACCOUNT ||--o{ BILL : "billed by"
+    BILLING_ACCOUNT ||--o{ CHARGE : "charged in"
+    SUBSCRIBER }|--|| SERVICE_AGREEMENT : "uses"
+    SUBSCRIBER ||--o{ CHARGE : "generates"
