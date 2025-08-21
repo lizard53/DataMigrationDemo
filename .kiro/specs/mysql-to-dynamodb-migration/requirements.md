@@ -74,8 +74,8 @@ This feature involves migrating a billing system from on-premises MySQL to AWS D
 3. WHEN data validation is performed THEN the system SHALL compare record counts and data integrity between on-premises MySQL and AWS DynamoDB
 4. IF performance issues arise THEN the system SHALL provide alerting and diagnostic capabilities including network latency and bandwidth utilization
 5. WHEN migration is complete THEN the system SHALL generate comprehensive migration reports with success metrics and network performance data
-### R
-equirement 7
+
+### Requirement 7
 
 **User Story:** As a network administrator, I want secure and reliable network connectivity between on-premises and AWS, so that data migration can proceed safely without exposing sensitive billing information.
 
